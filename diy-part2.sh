@@ -26,36 +26,215 @@
 
 ###############以下是我的代码###############
 
+
 #!/bin/bash
+#========================================================================================
+# 自动替换 mt7621_iptime_a3004ns-dual.dts 为 32M 闪存版本（ImmortalWrt 24.10 专用）
+#========================================================================================
 
-# 注意：执行此脚本时，当前目录已经在 openwrt 源码根目录
-# 不要再 cd openwrt 或进入其他不存在的目录！
+# 进入 DTS 所在目录
+cd target/linux/ramips/dts
 
-echo "正在修改设备树文件以适配 32MB 闪存..."
+# 直接覆盖写入 32M 闪存 DTS
+cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
 
-# 目标文件路径（相对于 openwrt 根目录）
-DTS_FILE="target/linux/ramips/dts/mt7621_iptime_a3004ns-dual.dts"
+#include "mt7621.dtsi"
 
-# 检查文件是否存在
-if [ ! -f "$DTS_FILE" ]; then
-    echo "错误：找不到 $DTS_FILE"
-    echo "当前目录：$(pwd)"
-    ls -la target/linux/ramips/dts/ | head -20
-    exit 1
-fi
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/leds/common.h>
 
-# 备份原文件
-cp "$DTS_FILE" "$DTS_FILE.bak"
+/ {
+	compatible = "iptime,a3004ns-dual", "mediatek,mt7621-soc";
+	model = "ipTIME A3004NS-dual";
 
-# 修改 firmware 分区大小：从 0xfc0000 (16MB) 改为 0x1fb0000 (~31.5MB)
-sed -i 's/reg = <0x40000 0xfc0000>;/reg = <0x40000 0x1fb0000>;/' "$DTS_FILE"
+	aliases {
+		led-boot = &led_cpu;
+		led-failsafe = &led_cpu;
+		led-running = &led_cpu;
+		led-upgrade = &led_cpu;
+	};
 
-# 验证修改是否成功
-if grep -q "reg = <0x40000 0x1fb0000>" "$DTS_FILE"; then
-    echo "✅ 成功修改 firmware 分区大小为 32MB 布局"
-else
-    echo "❌ 修改失败，请检查原文件格式"
-    exit 1
-fi
+	leds {
+		compatible = "gpio-leds";
 
-echo "diy-part2.sh 执行完成"
+		led_cpu: cpu {
+			function = LED_FUNCTION_CPU;
+			color = <LED_COLOR_ID_BLUE>;
+			gpios = <&gpio 18 GPIO_ACTIVE_LOW>;
+		};
+
+		usb {
+			function = LED_FUNCTION_USB;
+			color = <LED_COLOR_ID_BLUE>;
+			gpios = <&gpio 7 GPIO_ACTIVE_LOW>;
+			trigger-sources = <&xhci_ehci_port1>;
+			linux,default-trigger = "usbport";
+		};
+	};
+
+	keys {
+		compatible = "gpio-keys";
+
+		reset {
+			label = "reset";
+			gpios = <&gpio 4 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_RESTART>;
+		};
+
+		wps {
+			label = "wps";
+			gpios = <&gpio 3 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_WPS_BUTTON>;
+		};
+	};
+};
+
+&spi0 {
+	status = "okay";
+
+	flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = 50000000;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = 1;
+			#size-cells = 1;
+
+			partition@0 {
+				label = "u-boot";
+				reg = <0x0 0x20000>;
+				read-only;
+
+				nvmem-layout {
+					compatible = "fixed-layout";
+					#address-cells = 1;
+					#size-cells = 1;
+
+					macaddr_uboot_1fc20: macaddr@1fc20 {
+						reg = <0x1fc20 0x6>;
+					};
+
+					macaddr_uboot_1fc40: macaddr@1fc40 {
+						reg = <0x1fc40 0x6>;
+					};
+				};
+			};
+
+			partition@20000 {
+				label = "config";
+				reg = <0x20000 0x10000>;
+				read-only;
+			};
+
+			partition@30000 {
+				label = "factory";
+				reg = <0x30000 0x10000>;
+				read-only;
+
+				nvmem-layout {
+					compatible = "fixed-layout";
+					#address-cells = 1;
+					#size-cells = 1;
+
+					eeprom_factory_0: eeprom@0 {
+						reg = <0x0 0x200>;
+					};
+
+					eeprom_factory_8000: eeprom@8000 {
+						reg = <0x8000 0x200>;
+					};
+				};
+			};
+
+			# 32M 闪存分区（唯一修改点）
+			partition@40000 {
+				label = "firmware";
+				reg = <0x40000 0x1fc0000>;
+				compatible = "denx,uimage";
+			};
+		};
+	};
+};
+
+&gmac0 {
+	nvmem-cells = <&macaddr_uboot_1fc20>;
+	nvmem-cell-names = "mac-address";
+};
+
+&gmac1 {
+	status = "okay";
+	label = "wan";
+	phy-handle = <&ethphy0>;
+	nvmem-cells = <&macaddr_uboot_1fc40>;
+	nvmem-cell-names = "mac-address";
+};
+
+&switch0 {
+	ports {
+		port@1 {
+			status = "okay";
+			label = "lan1";
+		};
+
+		port@2 {
+			status = "okay";
+			label = "lan2";
+		};
+
+		port@3 {
+			status = "okay";
+			label = "lan3";
+		};
+
+		port@4 {
+			status = "okay";
+			label = "lan4";
+		};
+	};
+};
+
+&pcie {
+	status = "okay";
+};
+
+&pcie0 {
+	wifi@0,0 {
+		compatible = "mediatek,mt76";
+		reg = <0x0000 0 0 0 0>;
+		nvmem-cells = <&eeprom_factory_8000>;
+		nvmem-cell-names = "eeprom";
+		ieee80211-freq-limit = <5000000 6000000>;
+
+		led {
+			led-sources = <2>;
+			led-active-low;
+		};
+	};
+};
+
+&pcie1 {
+	wifi@0,0 {
+		compatible = "mediatek,mt76";
+		reg = <0x0000 0 0 0 0>;
+		nvmem-cells = <&eeprom_factory_0>;
+		nvmem-cell-names = "eeprom";
+		ieee80211-freq-limit = <2400000 2500000>;
+
+		led {
+			led-sources = <2>;
+			led-active-low;
+		};
+	};
+};
+EOF
+
+# 返回源码根目录
+cd $OPENWRT_ROOT
+
+#========================================================================================
+# 以下可以放你自己的其他自定义（如添加插件、修改IP、修改主题等）
+#========================================================================================
