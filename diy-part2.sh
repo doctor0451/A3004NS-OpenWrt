@@ -18,3 +18,15 @@
 
 # Modify hostname
 #sed -i 's/OpenWrt/P3TERX-Router/g' package/base-files/files/bin/config_generate
+
+
+
+
+
+
+#以下是我的代码
+# 为 A3004NS 适配 32M 闪存（如果硬改了32M）
+sed -i '/define Device\/iptime_a3004ns-dual/,/endef/ s/IMAGE_SIZE := [0-9]*k/IMAGE_SIZE := 32128k/' target/linux/ramips/mt7621/mt7621.mk
+
+# 添加 A3004NS 设备树的 broken-flash-reset（可选，防止软重启异常）
+sed -i '/spi-max-frequency/a\\t\tbroken-flash-reset;' target/linux/ramips/dts/mt7621_iptime_a3004ns-dual.dts
