@@ -24,18 +24,38 @@
 
 
 
-#以下是我的代码
+###############以下是我的代码###############
+
 #!/bin/bash
-# diy-part2.sh - 在 make 执行前运行
 
-# 切换到目标设备树文件所在目录
-TARGET_DTS_DIR="target/linux/ramips/dts"
-cd openwrt || exit 1
+# 注意：执行此脚本时，当前目录已经在 openwrt 源码根目录
+# 不要再 cd openwrt 或进入其他不存在的目录！
 
-# 备份原始 dts 文件（可选）
-cp ${TARGET_DTS_DIR}/mt7621_iptime_a3004ns-dual.dts ${TARGET_DTS_DIR}/mt7621_iptime_a3004ns-dual.dts.bak
+echo "正在修改设备树文件以适配 32MB 闪存..."
 
-# 使用 sed 修改 firmware 分区的 reg 值（从 0x40000 0xfc0000 改为 0x40000 0x1fb0000）
-sed -i 's/reg = <0x40000 0xfc0000>;/reg = <0x40000 0x1fb0000>;/' ${TARGET_DTS_DIR}/mt7621_iptime_a3004ns-dual.dts
+# 目标文件路径（相对于 openwrt 根目录）
+DTS_FILE="target/linux/ramips/dts/mt7621_iptime_a3004ns-dual.dts"
 
-echo "已修改 mt7621_iptime_a3004ns-dual.dts 的 firmware 分区大小为 32MB 布局"
+# 检查文件是否存在
+if [ ! -f "$DTS_FILE" ]; then
+    echo "错误：找不到 $DTS_FILE"
+    echo "当前目录：$(pwd)"
+    ls -la target/linux/ramips/dts/ | head -20
+    exit 1
+fi
+
+# 备份原文件
+cp "$DTS_FILE" "$DTS_FILE.bak"
+
+# 修改 firmware 分区大小：从 0xfc0000 (16MB) 改为 0x1fb0000 (~31.5MB)
+sed -i 's/reg = <0x40000 0xfc0000>;/reg = <0x40000 0x1fb0000>;/' "$DTS_FILE"
+
+# 验证修改是否成功
+if grep -q "reg = <0x40000 0x1fb0000>" "$DTS_FILE"; then
+    echo "✅ 成功修改 firmware 分区大小为 32MB 布局"
+else
+    echo "❌ 修改失败，请检查原文件格式"
+    exit 1
+fi
+
+echo "diy-part2.sh 执行完成"
