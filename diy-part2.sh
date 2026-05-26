@@ -27,15 +27,24 @@
 ###############以下是我的代码###############
 
 
+
+
+
 #!/bin/bash
 #========================================================================================
-# 自动替换 mt7621_iptime_a3004ns-dual.dts 为 32M 闪存版本（ImmortalWrt 24.10 专用）
+# P3TERX 云编译 → ipTIME A3004NS-dual + 32M 闪存 + ImmortalWrt 24.10
 #========================================================================================
 
-# 进入 DTS 所在目录
-cd target/linux/ramips/dts
+#==================== 【关键】强制指定目标机型（解决 x86 问题）====================
+cat > .config <<EOF
+CONFIG_TARGET_ramips=y
+CONFIG_TARGET_ramips_mt7621=y
+CONFIG_TARGET_ramips_mt7621_DEVICE_iptime_a3004ns-dual=y
+EOF
 
-# 直接覆盖写入 32M 闪存 DTS
+#==================== 自动替换 32M 闪存 DTS ====================
+cd target/linux/ramips/dts || exit
+
 cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 // SPDX-License-Identifier: GPL-2.0-or-later OR MIT
 
@@ -101,8 +110,8 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 
 		partitions {
 			compatible = "fixed-partitions";
-			#address-cells = 1;
-			#size-cells = 1;
+			#address-cells = <1>;
+			#size-cells = <1>;
 
 			partition@0 {
 				label = "u-boot";
@@ -111,15 +120,15 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 
 				nvmem-layout {
 					compatible = "fixed-layout";
-					#address-cells = 1;
-					#size-cells = 1;
+					#address-cells = <1>;
+					#size-cells = <1>;
 
 					macaddr_uboot_1fc20: macaddr@1fc20 {
-						reg = <0x1fc20 0x6>;
+						reg = <0x1fc20 6>;
 					};
 
 					macaddr_uboot_1fc40: macaddr@1fc40 {
-						reg = <0x1fc40 0x6>;
+						reg = <0x1fc40 6>;
 					};
 				};
 			};
@@ -137,8 +146,8 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 
 				nvmem-layout {
 					compatible = "fixed-layout";
-					#address-cells = 1;
-					#size-cells = 1;
+					#address-cells = <1>;
+					#size-cells = <1>;
 
 					eeprom_factory_0: eeprom@0 {
 						reg = <0x0 0x200>;
@@ -150,10 +159,9 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 				};
 			};
 
-			# 32M 闪存分区（唯一修改点）
 			partition@40000 {
 				label = "firmware";
-				reg = <0x40000 0x1fc0000>;
+				reg = <0x40000 0x1fb0000>;  // 👈 32M 闪存专用
 				compatible = "denx,uimage";
 			};
 		};
@@ -227,14 +235,15 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 		led {
 			led-sources = <2>;
 			led-active-low;
+			led-active-low;
 		};
 	};
 };
 EOF
 
-# 返回源码根目录
-cd $OPENWRT_ROOT
+cd - || exit
 
 #========================================================================================
-# 以下可以放你自己的其他自定义（如添加插件、修改IP、修改主题等）
+# 以下可以放你自己的插件、主题、自定义设置
 #========================================================================================
+
