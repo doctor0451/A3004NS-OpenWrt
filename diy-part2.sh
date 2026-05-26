@@ -30,26 +30,21 @@
 
 
 
-#!/bin/bash
-#========================================================================================
-# P3TERX 云编译 → ipTIME A3004NS-dual + 32M 闪存 + ImmortalWrt 24.10
-#========================================================================================
 
-#==================== 【关键】强制指定目标机型（解决 x86 问题）====================
+#!/bin/bash
+
+# 自动指定机型（不会再出 x86）
 cat > .config <<EOF
 CONFIG_TARGET_ramips=y
 CONFIG_TARGET_ramips_mt7621=y
 CONFIG_TARGET_ramips_mt7621_DEVICE_iptime_a3004ns-dual=y
 EOF
 
-#==================== 自动替换 32M 闪存 DTS ====================
-cd target/linux/ramips/dts || exit
-
+# 替换 原装DTS + 32M闪存
+cd target/linux/ramips/dts
 cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 // SPDX-License-Identifier: GPL-2.0-or-later OR MIT
-
 #include "mt7621.dtsi"
-
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/leds/common.h>
@@ -106,7 +101,7 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 	flash@0 {
 		compatible = "jedec,spi-nor";
 		reg = <0>;
-		spi-max-frequency = 50000000;
+		spi-max-frequency = <50000000>;
 
 		partitions {
 			compatible = "fixed-partitions";
@@ -124,11 +119,11 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 					#size-cells = <1>;
 
 					macaddr_uboot_1fc20: macaddr@1fc20 {
-						reg = <0x1fc20 6>;
+						reg = <0x1fc20 0x6>;
 					};
 
 					macaddr_uboot_1fc40: macaddr@1fc40 {
-						reg = <0x1fc40 6>;
+						reg = <0x1fc40 0x6>;
 					};
 				};
 			};
@@ -161,7 +156,7 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 
 			partition@40000 {
 				label = "firmware";
-				reg = <0x40000 0x1fb0000>;  // 👈 32M 闪存专用
+				reg = <0x40000 0x1fb0000>;
 				compatible = "denx,uimage";
 			};
 		};
@@ -181,23 +176,24 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 	nvmem-cell-names = "mac-address";
 };
 
+&ethphy0 {
+	/delete-property/ interrupts;
+};
+
 &switch0 {
 	ports {
 		port@1 {
 			status = "okay";
 			label = "lan1";
 		};
-
 		port@2 {
 			status = "okay";
 			label = "lan2";
 		};
-
 		port@3 {
 			status = "okay";
 			label = "lan3";
 		};
-
 		port@4 {
 			status = "okay";
 			label = "lan4";
@@ -235,15 +231,19 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 		led {
 			led-sources = <2>;
 			led-active-low;
-			led-active-low;
 		};
+	};
+};
+
+&state_default {
+	gpio {
+		groups = "wdt", "i2c", "uart3";
+		function = "gpio";
 	};
 };
 EOF
 
-cd - || exit
+cd -
 
-#========================================================================================
-# 以下可以放你自己的插件、主题、自定义设置
 #========================================================================================
 
