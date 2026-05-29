@@ -31,9 +31,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-22.04
-           permissions:      # ← 新增这一行
-      contents: write  # ← 新增这一行（允许创建 Release）
-
+    permissions:      # ← 新增这一行
+    contents: write  # ← 新增这一行（允许创建 Release）
+    
     steps:
     - name: Checkout
       uses: actions/checkout@main
