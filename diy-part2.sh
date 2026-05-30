@@ -29,16 +29,7 @@
 
 
 
-
-
 #!/bin/bash
-
-# 自动指定机型（不会再出 x86）
-cat > .config <<EOF
-CONFIG_TARGET_ramips=y
-CONFIG_TARGET_ramips_mt7621=y
-CONFIG_TARGET_ramips_mt7621_DEVICE_iptime_a3004ns-dual=y
-EOF
 
 # 替换 原装DTS + 32M闪存
 cd target/linux/ramips/dts
@@ -102,7 +93,8 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 		compatible = "jedec,spi-nor";
 		reg = <0>;
 		spi-max-frequency = <50000000>;
-
+		broken-flash-reset;
+		
 		partitions {
 			compatible = "fixed-partitions";
 			#address-cells = <1>;
@@ -156,7 +148,7 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 
 			partition@40000 {
 				label = "firmware";
-				reg = <0x40000 0x1fb0000>;
+				reg = <0x40000 0x1fc0000>;
 				compatible = "denx,uimage";
 			};
 		};
@@ -246,4 +238,3 @@ EOF
 cd -
 
 #========================================================================================
-
