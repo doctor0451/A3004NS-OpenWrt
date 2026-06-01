@@ -27,7 +27,6 @@
 ###############以下是我的代码###############
 #!/bin/bash
 
-MK_FILE="target/linux/ramips/image/mt7621.mk"
 # 替换 原装DTS + 32M闪存
 cd target/linux/ramips/dts
 cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
@@ -237,6 +236,7 @@ cd -
 # ==============================================
 # 2. 32M 固件大小配置
 # ==============================================
-sed -i '/define Device\/phicomm_k2p/,/endef/ {
+MK_FILE="target/linux/ramips/image/mt7621.mk"
+sed -i '/define Device\/iptime_a3004ns-dual/,/endef/ {
     s/IMAGE_SIZE := .*/IMAGE_SIZE := 32512k/
 }' "$MK_FILE"
