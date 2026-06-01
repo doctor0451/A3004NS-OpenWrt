@@ -25,14 +25,9 @@
 
 
 ###############以下是我的代码###############
-
-
-
-
-
-
 #!/bin/bash
 
+MK_FILE="target/linux/ramips/image/mt7621.mk"
 # 替换 原装DTS + 32M闪存
 cd target/linux/ramips/dts
 cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
