@@ -9,24 +9,14 @@
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
-
 # Modify default IP
 #sed -i 's/192.168.1.1/192.168.50.5/g' package/base-files/files/bin/config_generate
-
 # Modify default theme
 #sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
-
 # Modify hostname
 #sed -i 's/OpenWrt/P3TERX-Router/g' package/base-files/files/bin/config_generate
-
-
-
-
-
-
 ###############以下是我的代码###############
 #!/bin/bash
-
 # 替换 原装DTS + 32M闪存
 cd target/linux/ramips/dts
 cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
@@ -35,27 +25,22 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/leds/common.h>
-
 / {
 	compatible = "iptime,a3004ns-dual", "mediatek,mt7621-soc";
 	model = "ipTIME A3004NS-dual";
-
 	aliases {
 		led-boot = &led_cpu;
 		led-failsafe = &led_cpu;
 		led-running = &led_cpu;
 		led-upgrade = &led_cpu;
 	};
-
 	leds {
 		compatible = "gpio-leds";
-
 		led_cpu: cpu {
 			function = LED_FUNCTION_CPU;
 			color = <LED_COLOR_ID_BLUE>;
 			gpios = <&gpio 18 GPIO_ACTIVE_LOW>;
 		};
-
 		usb {
 			function = LED_FUNCTION_USB;
 			color = <LED_COLOR_ID_BLUE>;
@@ -64,16 +49,13 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 			linux,default-trigger = "usbport";
 		};
 	};
-
 	keys {
 		compatible = "gpio-keys";
-
 		reset {
 			label = "reset";
 			gpios = <&gpio 4 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_RESTART>;
 		};
-
 		wps {
 			label = "wps";
 			gpios = <&gpio 3 GPIO_ACTIVE_LOW>;
@@ -81,10 +63,8 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 		};
 	};
 };
-
 &spi0 {
 	status = "okay";
-
 	flash@0 {
 		compatible = "jedec,spi-nor";
 		reg = <0>;
@@ -95,53 +75,43 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 			compatible = "fixed-partitions";
 			#address-cells = <1>;
 			#size-cells = <1>;
-
 			partition@0 {
 				label = "u-boot";
 				reg = <0x0 0x20000>;
 				read-only;
-
 				nvmem-layout {
 					compatible = "fixed-layout";
 					#address-cells = <1>;
 					#size-cells = <1>;
-
 					macaddr_uboot_1fc20: macaddr@1fc20 {
 						reg = <0x1fc20 0x6>;
 					};
-
 					macaddr_uboot_1fc40: macaddr@1fc40 {
 						reg = <0x1fc40 0x6>;
 					};
 				};
 			};
-
 			partition@20000 {
 				label = "config";
 				reg = <0x20000 0x10000>;
 				read-only;
 			};
-
 			partition@30000 {
 				label = "factory";
 				reg = <0x30000 0x10000>;
 				read-only;
-
 				nvmem-layout {
 					compatible = "fixed-layout";
 					#address-cells = <1>;
 					#size-cells = <1>;
-
 					eeprom_factory_0: eeprom@0 {
 						reg = <0x0 0x200>;
 					};
-
 					eeprom_factory_8000: eeprom@8000 {
 						reg = <0x8000 0x200>;
 					};
 				};
 			};
-
 			partition@40000 {
 				label = "firmware";
 				reg = <0x40000 0x1fc0000>;
@@ -150,12 +120,10 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 		};
 	};
 };
-
 &gmac0 {
 	nvmem-cells = <&macaddr_uboot_1fc20>;
 	nvmem-cell-names = "mac-address";
 };
-
 &gmac1 {
 	status = "okay";
 	label = "wan";
@@ -163,11 +131,9 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 	nvmem-cells = <&macaddr_uboot_1fc40>;
 	nvmem-cell-names = "mac-address";
 };
-
 &ethphy0 {
 	/delete-property/ interrupts;
 };
-
 &switch0 {
 	ports {
 		port@1 {
@@ -188,11 +154,9 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 		};
 	};
 };
-
 &pcie {
 	status = "okay";
 };
-
 &pcie0 {
 	wifi@0,0 {
 		compatible = "mediatek,mt76";
@@ -200,14 +164,12 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 		nvmem-cells = <&eeprom_factory_8000>;
 		nvmem-cell-names = "eeprom";
 		ieee80211-freq-limit = <5000000 6000000>;
-
 		led {
 			led-sources = <2>;
 			led-active-low;
 		};
 	};
 };
-
 &pcie1 {
 	wifi@0,0 {
 		compatible = "mediatek,mt76";
@@ -215,30 +177,28 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 		nvmem-cells = <&eeprom_factory_0>;
 		nvmem-cell-names = "eeprom";
 		ieee80211-freq-limit = <2400000 2500000>;
-
 		led {
 			led-sources = <2>;
 			led-active-low;
 		};
 	};
 };
-
 &state_default {
 	gpio {
 		groups = "wdt", "i2c", "uart3";
 		function = "gpio";
 	};
 };
-// MT7621内置温度传感器，mt7621.dtsi无thermal标签，不能用&thermal引用，直接定义完整节点
-thermal@11000000 {
-	compatible = "mediatek,mt7621-thermal";
-	reg = <0x11000000 0x1000>;
-	status = "okay";
+
+// MT7621 SoC内置温度传感器标准开启方式
+// apmixed在mt7621.dtsi已预定义寄存器地址，无需手动填写reg，无label缺失报错
+&apmixed {
+	thermal {
+		status = "okay"; // 启用温度读取模块
+	};
 };
 EOF
-
 cd -
-
 # ==============================================
 # 2. 32M 固件大小配置
 # ==============================================
