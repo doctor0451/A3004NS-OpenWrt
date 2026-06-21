@@ -62,6 +62,14 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 			linux,code = <KEY_WPS_BUTTON>;
 		};
 	};
+
+	// MT7621 SoC温度传感器，放入根节点内部，解决语法报错
+	// 0x11000000 原厂固定温控寄存器基地址，0x1000为寄存器区间长度
+	thermal@11000000 {
+		compatible = "mediatek,mt7621-thermal";
+		reg = <0x11000000 0x1000>;
+		status = "okay";
+	};
 };
 &spi0 {
 	status = "okay";
