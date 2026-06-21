@@ -189,14 +189,6 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 		function = "gpio";
 	};
 };
-
-// MT7621 SoC内置温度传感器标准开启方式
-// apmixed在mt7621.dtsi已预定义寄存器地址，无需手动填写reg，无label缺失报错
-&apmixed {
-	thermal {
-		status = "okay"; // 启用温度读取模块
-	};
-};
 EOF
 cd -
 # ==============================================
