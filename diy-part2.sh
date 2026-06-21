@@ -229,9 +229,10 @@ cat > mt7621_iptime_a3004ns-dual.dts <<-'EOF'
 		function = "gpio";
 	};
 };
-// 新增MT7621温度传感器节点
-&thermal {
+// MT7621内置温度传感器，mt7621.dtsi无thermal标签，不能用&thermal引用，直接定义完整节点
+thermal@11000000 {
 	compatible = "mediatek,mt7621-thermal";
+	reg = <0x11000000 0x1000>;
 	status = "okay";
 };
 EOF
